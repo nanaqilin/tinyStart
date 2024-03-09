@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <fstream>
 #include <sstream>
+#include <time.h>
 
 #define ASSERT(x) if(!(x)) __debugbreak()
 #define GLCall(x) GLClearError(); \
@@ -114,7 +115,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -136,17 +137,17 @@ int main(void)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
     //io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
+    //ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
 
 
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
@@ -164,7 +165,7 @@ int main(void)
 #endif
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f*1.5);
+    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\simhei.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
    
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -178,9 +179,15 @@ int main(void)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow();
-
         {
+            ImGuiStyle& Style = ImGui::GetStyle();
+            auto Color = Style.Colors;
+            Style.ChildRounding = 8.0f;
+            Style.FrameRounding = 5.0f;
+            Color[ImGuiCol_Button] = ImColor(51, 120, 255, 255);
+            Color[ImGuiCol_ButtonHovered] = ImColor(71, 140, 255, 255);
+            Color[ImGuiCol_ButtonActive] = ImColor(31, 100, 225, 255);
+
             static float f = 0.0f;
             static int counter = 0;
 
@@ -190,10 +197,17 @@ int main(void)
 
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+            if (ImGui::Button("Button", { 150.0f,40.0f }))          // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
+
+            time_t t = time(NULL);
+            char tmp[32] = { NULL };
+            tm t_tm;
+            localtime_s(&t_tm, &t);
+            strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", &t_tm);
+            ImGui::TextColored(Color[ImGuiCol_Button], "%s", tmp);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
@@ -221,7 +235,11 @@ int main(void)
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
     }
-
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
